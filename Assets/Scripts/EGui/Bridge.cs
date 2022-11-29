@@ -3,7 +3,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Google.Protobuf;
 using UnityEngine;
-using Input = Proto.Input;
 
 namespace EGui
 {
