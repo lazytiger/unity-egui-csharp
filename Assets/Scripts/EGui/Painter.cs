@@ -14,7 +14,7 @@ namespace EGui
         private readonly Color32 color;
         private readonly Vector2 uv;
     }
-    
+
     public class Painter
     {
         private static Painter _instance;
@@ -53,8 +53,21 @@ namespace EGui
 
             if (_materials.TryGetValue(textureId, out var m))
             {
-                _cb.CopyTexture(tex, 0, 0, 0, 0, width, height, 
-                    m.mainTexture, 0, 0, offsetX, offsetY);
+                if ((offsetX + width) <= m.mainTexture.width && (offsetY + height) <= m.mainTexture.height)
+                {
+                    _cb.CopyTexture(tex, 0, 0, 0, 0, width, height,
+                        m.mainTexture, 0, 0, offsetX, offsetY);
+                }
+                else if (offsetX == 0 && offsetY == 0)
+                {
+                    m.mainTexture = tex;
+                }
+                else
+                {
+                    Debug.LogError("invalid message update");
+                    Debug.Log($"width:{width}, height:{height}, offsetX:{offsetX}, offsetY:{offsetY}");
+                    Debug.Log($"texture:{m.mainTexture.width},{m.mainTexture.height}");
+                }
             }
             else
             {
@@ -83,7 +96,8 @@ namespace EGui
             }
         }
 
-        public void PaintMesh(ulong textureId, int vertexCount, IntPtr vBuffer, int indexCount, IntPtr iBuffer, Bounds bound)
+        public void PaintMesh(ulong textureId, int vertexCount, IntPtr vBuffer, int indexCount, IntPtr iBuffer,
+            Bounds bound)
         {
             if (!_materials.TryGetValue(textureId, out var material))
             {
@@ -128,8 +142,8 @@ namespace EGui
         {
             (last, current) = (current, last);
             _cb.EndSample("Draw");
-        } 
-        
+        }
+
         private static unsafe NativeArray<T> IntPtrToNativeArray<T>(IntPtr ptr, int count) where T : struct
         {
             var array =
