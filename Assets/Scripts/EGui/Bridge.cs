@@ -7,13 +7,19 @@ using UnityEngine;
 namespace EGui
 {
     [StructLayout(LayoutKind.Sequential)]
-    public struct EGuiInitializer
+    public struct UnityInitializer
     {
         internal IntPtr SetTexture;
         internal IntPtr RemTexture;
         internal IntPtr BeginPaint;
         internal IntPtr PaintMesh;
         internal IntPtr EndPaint;
+    }
+
+    public struct EGuiInitializer
+    {
+        internal IntPtr Update;
+        internal IntPtr App;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -30,13 +36,14 @@ namespace EGui
 
         private delegate void RemTexture(ulong textureId);
 
-        private delegate void PaintMesh(ulong textureId, int vertexCount, IntPtr vBuffer, int indexCount, IntPtr iBuffer,
+        private delegate void PaintMesh(ulong textureId, int vertexCount, IntPtr vBuffer, int indexCount,
+            IntPtr iBuffer,
             float minX, float minY, float maxX, float maxY);
 
         private delegate void FuncNoArgsNoReturn();
-        
+
 #if UNITY_EDITOR
-        private delegate IntPtr InitEGuiDelegate(EGuiInitializer initializer);
+        private delegate EGuiInitializer InitEGuiDelegate(UnityInitializer initializer);
 
         private InitEGuiDelegate InitEGui;
 
@@ -53,23 +60,25 @@ namespace EGui
             public static extern bool FreeLibrary(IntPtr hModule);
         }
 
-        private IntPtr eguiHandle;
+        private IntPtr eguiHandle = IntPtr.Zero;
 
-        private string _eguiLibPath;
+        private IntPtr app = IntPtr.Zero;
+
+        private string _eguiLibPath = "";
 
         public string EGuiLibPath
         {
             set => _eguiLibPath = value;
         }
-        
+
 #else
         [DllImport("egui")]
-        public static extern IntPtr InitEGui(EGuiInitializer initializer);
+        public static extern EGuiInitializer InitEGui(UnityInitializer initializer);
 #endif
-        private delegate void UpdateEGuiDelegate(Buffer buffer);
+        private delegate void UpdateEGuiDelegate(Buffer buffer, IntPtr app, uint destroy);
 
         private UpdateEGuiDelegate UpdateEGui;
-        
+
         private static Bridge _instance;
 
         public static Bridge Instance
@@ -98,7 +107,7 @@ namespace EGui
             var bound = new Bounds((min + max) / 2, max - min);
             Painter.Instance.PaintMesh(textureId, vertexCount, vBuffer, indexCount, iBuffer, bound);
         }
-        
+
         static void BeginPaint()
         {
             Painter.Instance.BeginPaint();
@@ -125,8 +134,8 @@ namespace EGui
             }
 
 #endif
-            
-            var initializer = new EGuiInitializer()
+
+            var initializer = new UnityInitializer()
             {
                 SetTexture = Marshal.GetFunctionPointerForDelegate((SetTexture) setTexture),
                 RemTexture = Marshal.GetFunctionPointerForDelegate((RemTexture) remTexture),
@@ -134,8 +143,9 @@ namespace EGui
                 BeginPaint = Marshal.GetFunctionPointerForDelegate((FuncNoArgsNoReturn) BeginPaint),
                 EndPaint = Marshal.GetFunctionPointerForDelegate((FuncNoArgsNoReturn) EndPaint),
             };
-            var ptr = InitEGui(initializer);
-            UpdateEGui = Marshal.GetDelegateForFunctionPointer<UpdateEGuiDelegate>(ptr);
+            var egui = InitEGui(initializer);
+            UpdateEGui = Marshal.GetDelegateForFunctionPointer<UpdateEGuiDelegate>(egui.Update);
+            app = egui.App;
         }
 
         public void Update()
@@ -144,12 +154,13 @@ namespace EGui
             {
                 return;
             }
+
             var input = InputGather.Instance.GetInput();
             ms.SetLength(0);
             input.WriteTo(ms);
             var handle = GCHandle.Alloc(ms.GetBuffer(), GCHandleType.Pinned);
             var addr = handle.AddrOfPinnedObject();
-            UpdateEGui(new Buffer {data = addr, len = (ulong) ms.Length});
+            UpdateEGui(new Buffer {data = addr, len = (ulong) ms.Length}, app, 0);
             handle.Free();
         }
 
@@ -158,8 +169,10 @@ namespace EGui
 #if UNITY_EDITOR
             if (eguiHandle != IntPtr.Zero)
             {
+                UpdateEGui(new Buffer() {data = IntPtr.Zero, len = 0}, app, 1);
                 NativeMethods.FreeLibrary(eguiHandle);
                 eguiHandle = IntPtr.Zero;
+                app = IntPtr.Zero;
                 InitEGui = null;
                 UpdateEGui = null;
             }
