@@ -46,7 +46,8 @@ namespace EGui
         {
             var tex = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
             {
-                filterMode = filterMode == 1 ? FilterMode.Point : FilterMode.Bilinear
+                filterMode = filterMode == 1 ? FilterMode.Point : FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
             };
             tex.LoadRawTextureData(data, width * height * 4);
             tex.Apply();

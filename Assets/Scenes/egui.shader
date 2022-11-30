@@ -13,6 +13,7 @@ Shader "Unlit/egui"
         Blend One OneMinusSrcAlpha, OneMinusDstAlpha One
         Cull off
         ZWrite off
+        ZTest off
         LOD 100
 
         Pass
@@ -57,7 +58,14 @@ Shader "Unlit/egui"
             fixed4 frag(v2f i) : SV_Target
             {
                 fixed4 col = tex2D(_MainTex, i.uv);
-                return col * i.color;
+                #if !UNITY_COLORSPACE_GAMMA
+                col.xyz = LinearToGammaSpace(col.xyz);
+                #endif
+                col = col * i.color;
+                #if !UNITY_COLORSPACE_GAMMA         
+                col.xyz = GammaToLinearSpace(col.xyz);
+                #endif
+                return col;
             }
             ENDCG
         }

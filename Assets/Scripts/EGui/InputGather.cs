@@ -14,8 +14,8 @@ namespace EGui
 {
     public class InputGather
     {
-       
-        private static readonly KeyCode[] UnityKeys = {
+        private static readonly KeyCode[] UnityKeys =
+        {
             KeyCode.A, KeyCode.B, KeyCode.Backspace, KeyCode.C, KeyCode.D, KeyCode.Delete, KeyCode.E, KeyCode.End,
             KeyCode.KeypadEnter, KeyCode.Escape, KeyCode.F, KeyCode.F1, KeyCode.F2, KeyCode.F3, KeyCode.F4, KeyCode.F5,
             KeyCode.F6, KeyCode.F7, KeyCode.F8, KeyCode.F9, KeyCode.F10, KeyCode.F11, KeyCode.F12, KeyCode.F13,
@@ -33,7 +33,8 @@ namespace EGui
             KeyCode.DownArrow, KeyCode.LeftArrow, KeyCode.RightArrow, KeyCode.UpArrow, KeyCode.PageDown, KeyCode.PageUp,
         };
 
-        private static readonly KeyType[] EguiKeys = {
+        private static readonly KeyType[] EguiKeys =
+        {
             KeyType.A, KeyType.B, KeyType.Backspace, KeyType.C, KeyType.D, KeyType.Delete, KeyType.E, KeyType.End,
             KeyType.Enter, KeyType.Escape, KeyType.F, KeyType.F1, KeyType.F2, KeyType.F3, KeyType.F4, KeyType.F5,
             KeyType.F6, KeyType.F7, KeyType.F8, KeyType.F9, KeyType.F10, KeyType.F11, KeyType.F12, KeyType.F13,
@@ -55,12 +56,13 @@ namespace EGui
         {
             get { return _instance ??= new InputGather(); }
         }
+
         private readonly Input input = new Input();
 
         StringBuilder sb = new StringBuilder();
 
         private Vector3 mousePosition;
-        
+
         public Input GetInput()
         {
             input.Events.Clear();
@@ -168,7 +170,6 @@ namespace EGui
                         Id = (ulong) touch.fingerId,
                         DeviceId = 0
                     }
-                    
                 };
                 input.Events.Add(e);
             }
@@ -189,20 +190,49 @@ namespace EGui
                 input.Events.Add(e);
             }
 
-            if (mousePosition.Equals(UnityInput.mousePosition)) return input;
+
+            if (!mousePosition.Equals(UnityInput.mousePosition))
+            {
+                if (UnityInput.mousePosition.x < 0 || UnityInput.mousePosition.y < 0 ||
+                    UnityInput.mousePosition.x > Screen.width || UnityInput.mousePosition.y > Screen.height)
+                {
+                    var e = new Event
+                    {
+                        Et = EventType.PointerGone
+                    };
+                    input.Events.Add(e);
+                }
+                else
+                {
+                    var e = new Event
+                    {
+                        Et = EventType.PointerMoved,
+                        PointerMoved = Pos2FromVector2(UnityInput.mousePosition)
+                    };
+                    input.Events.Add(e);
+                }
+
+                mousePosition = UnityInput.mousePosition;
+            }
+
+            var y = UnityInput.GetAxis("Mouse ScrollWheel");
+            if (y != 0)
             {
                 var e = new Event
                 {
-                    Et = EventType.PointerMoved,
-                    PointerMoved = Pos2FromVector2(UnityInput.mousePosition)
+                    Et = EventType.Scroll,
+                    Scroll = new Pos2
+                    {
+                        X = 0,
+                        Y = y * 30,
+                    }
                 };
                 input.Events.Add(e);
-                mousePosition = UnityInput.mousePosition;
             }
 
             return input;
         }
-        
+
         private static ButtonType EguiButtonTypeFromUnity(int mouse)
         {
             return mouse switch
