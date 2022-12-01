@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using AOT;
 using Google.Protobuf;
 using UnityEngine;
 
@@ -32,9 +33,9 @@ namespace EGui
     public class Bridge
     {
 #if UNITY_IPHONE
-        public static readonly string Library = "__Internal";
+        public const string Library = "__Internal";
 #else
-        public static readonly string Library = "egui";
+        public const string Library = "egui";
 #endif
 
         private delegate void SetTexture(ulong textureId, int offsetX, int offsetY, int width, int height,
@@ -68,7 +69,6 @@ namespace EGui
 
         private IntPtr eguiHandle = IntPtr.Zero;
 
-        private IntPtr app = IntPtr.Zero;
 
         private string _eguiLibPath = "";
 
@@ -81,6 +81,8 @@ namespace EGui
         [DllImport(Library, EntryPoint = "init")]
         public static extern EGuiInitializer InitEGui(UnityInitializer initializer);
 #endif
+        private IntPtr app = IntPtr.Zero;
+        
         private delegate void UpdateEGuiDelegate(Buffer buffer, IntPtr app, uint destroy);
 
         private UpdateEGuiDelegate UpdateEGui;
@@ -94,17 +96,20 @@ namespace EGui
 
         private MemoryStream ms = new();
 
+        [MonoPInvokeCallback(typeof(SetTexture))]
         static void setTexture(ulong textureId, int offsetX, int offsetY, int width, int height, int filterMode,
             IntPtr data)
         {
             Painter.Instance.SetTexture(textureId, offsetX, offsetY, width, height, filterMode, data);
         }
 
+        [MonoPInvokeCallback(typeof(RemTexture))]
         static void remTexture(ulong textureId)
         {
             Painter.Instance.RemTexture(textureId);
         }
 
+        [MonoPInvokeCallback(typeof(PaintMesh))]
         static void paintMesh(ulong textureId, int vertexCount, IntPtr vBuffer, int indexCount, IntPtr iBuffer,
             float minX, float minY, float maxX, float maxY)
         {
@@ -114,11 +119,13 @@ namespace EGui
             Painter.Instance.PaintMesh(textureId, vertexCount, vBuffer, indexCount, iBuffer, bound);
         }
 
+        [MonoPInvokeCallback(typeof(FuncNoArgsNoReturn))]
         static void BeginPaint()
         {
             Painter.Instance.BeginPaint();
         }
 
+        [MonoPInvokeCallback(typeof(FuncNoArgsNoReturn))]
         static void EndPaint()
         {
             Painter.Instance.EndPaint();

@@ -150,8 +150,10 @@ namespace EGui
             var array =
                 NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(
                     ptr.ToPointer(), count, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref array,
                 AtomicSafetyHandle.GetTempUnsafePtrSliceHandle());
+#endif
             return array;
         }
     }
