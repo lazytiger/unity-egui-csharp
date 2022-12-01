@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net.Mime;
 using System.Text;
 using Proto;
 using UnityEngine;
@@ -63,6 +64,45 @@ namespace EGui
 
         private Vector3 mousePosition;
 
+        private TouchScreenKeyboard keyboard;
+
+        private bool showStatus = false;
+
+        private string lastInput = "";
+
+        public void OpenKeyboard(int show)
+        {
+            var status = show != 0;
+            if (status == showStatus)
+            {
+                return;
+            }
+
+            showStatus = status;
+            if (showStatus)
+            {
+                keyboard = TouchScreenKeyboard.Open("");
+            }
+            else if (keyboard != null)
+            {
+                keyboard.active = false;
+                lastInput = "";
+            }
+        }
+
+        private string GetKeyboardInput()
+        {
+            var current = keyboard?.text;
+            if (current == null || current.Equals(lastInput))
+            {
+                return "";
+            }
+
+            var diff = current.Substring(lastInput.Length, current.Length - lastInput.Length);
+            lastInput = current;
+            return diff;
+        }
+
         public Input GetInput()
         {
             input.Events.Clear();
@@ -87,6 +127,7 @@ namespace EGui
             {
                 input.PredictedDt = 1.0f / Application.targetFrameRate;
             }
+
             input.Modifier = new Modifiers
             {
                 Alt = UnityInput.GetKey(KeyCode.LeftAlt) || UnityInput.GetKey(KeyCode.RightAlt),
@@ -177,12 +218,67 @@ namespace EGui
                     }
                 };
                 input.Events.Add(e);
+
+                switch (touch.phase)
+                {
+                    case UnityEngine.TouchPhase.Began:
+                        e = new Event
+                        {
+                            Et = EventType.PointerButton,
+                            PointerButton = new PointerButton
+                            {
+                                Button = ButtonType.Primary,
+                                Pressed = true,
+                                Pos = Pos2FromVector2(touch.position),
+                            }
+                        };
+                        input.Events.Add(e);
+                        goto case UnityEngine.TouchPhase.Moved;
+                    case UnityEngine.TouchPhase.Moved:
+                        e = new Event
+                        {
+                            Et = EventType.PointerMoved,
+                            PointerMoved = Pos2FromVector2(touch.position),
+                        };
+                        input.Events.Add(e);
+                        break;
+                    case UnityEngine.TouchPhase.Stationary:
+                        break;
+                    case UnityEngine.TouchPhase.Ended:
+                        e = new Event
+                        {
+                            Et = EventType.PointerButton,
+                            PointerButton = new PointerButton
+                            {
+                                Button = ButtonType.Primary,
+                                Pressed = false,
+                                Pos = Pos2FromVector2(touch.position),
+                            }
+                        };
+                        input.Events.Add(e);
+                        goto case UnityEngine.TouchPhase.Canceled;
+                    case UnityEngine.TouchPhase.Canceled:
+                        e = new Event
+                        {
+                            Et = EventType.PointerGone,
+                        };
+                        input.Events.Add(e);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
 
-            if (UnityInput.inputString != null && !UnityInput.inputString.Equals(""))
+
+#if UNITY_EDITOR
+            var inputString = UnityInput.inputString;
+#else
+            var inputString = GetKeyboardInput();
+#endif
+            if (inputString != null && !inputString.Equals(""))
             {
                 sb.Clear();
-                foreach (var c in UnityInput.inputString.Where(c => c != '\b' && c != '\n'))
+                foreach (var c in inputString.Where(c => !char.IsControl(c)))
                 {
                     sb.Append(c);
                 }

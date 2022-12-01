@@ -15,6 +15,7 @@ namespace EGui
         internal IntPtr BeginPaint;
         internal IntPtr PaintMesh;
         internal IntPtr EndPaint;
+        internal IntPtr ShowKeyboard;
     }
 
     public struct EGuiInitializer
@@ -48,6 +49,8 @@ namespace EGui
             float minX, float minY, float maxX, float maxY);
 
         private delegate void FuncNoArgsNoReturn();
+
+        private delegate void ShowKeyboard(int show);
 
 #if UNITY_EDITOR
         private delegate EGuiInitializer InitEGuiDelegate(UnityInitializer initializer);
@@ -131,6 +134,12 @@ namespace EGui
             Painter.Instance.EndPaint();
         }
 
+        [MonoPInvokeCallback(typeof(FuncNoArgsNoReturn))]
+        static void showKeyboard(int show)
+        {
+            InputGather.Instance.OpenKeyboard(show); 
+        }
+
         public void Init()
         {
 #if UNITY_EDITOR
@@ -155,6 +164,7 @@ namespace EGui
                 PaintMesh = Marshal.GetFunctionPointerForDelegate((PaintMesh) paintMesh),
                 BeginPaint = Marshal.GetFunctionPointerForDelegate((FuncNoArgsNoReturn) BeginPaint),
                 EndPaint = Marshal.GetFunctionPointerForDelegate((FuncNoArgsNoReturn) EndPaint),
+                ShowKeyboard = Marshal.GetFunctionPointerForDelegate((ShowKeyboard)showKeyboard)
             };
             var egui = InitEGui(initializer);
             UpdateEGui = Marshal.GetDelegateForFunctionPointer<UpdateEGuiDelegate>(egui.Update);
