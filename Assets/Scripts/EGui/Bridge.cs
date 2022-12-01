@@ -31,6 +31,12 @@ namespace EGui
 
     public class Bridge
     {
+#if UNITY_IPHONE
+        public static readonly string Library = "__Internal";
+#else
+        public static readonly string Library = "egui";
+#endif
+
         private delegate void SetTexture(ulong textureId, int offsetX, int offsetY, int width, int height,
             int filterMode, IntPtr data);
 
@@ -72,7 +78,7 @@ namespace EGui
         }
 
 #else
-        [DllImport("egui")]
+        [DllImport(Library, EntryPoint = "init")]
         public static extern EGuiInitializer InitEGui(UnityInitializer initializer);
 #endif
         private delegate void UpdateEGuiDelegate(Buffer buffer, IntPtr app, uint destroy);

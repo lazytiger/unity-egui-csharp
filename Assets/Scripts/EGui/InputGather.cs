@@ -80,8 +80,13 @@ namespace EGui
                 }
             };
             input.MaxTextureSide = (uint) SystemInfo.maxTextureSize;
+            input.Time = Time.time;
             input.HasFocus = UnityInput.anyKey;
             input.PixelsPerPoint = 1;
+            if (Application.targetFrameRate > 0)
+            {
+                input.PredictedDt = 1.0f / Application.targetFrameRate;
+            }
             input.Modifier = new Modifiers
             {
                 Alt = UnityInput.GetKey(KeyCode.LeftAlt) || UnityInput.GetKey(KeyCode.RightAlt),

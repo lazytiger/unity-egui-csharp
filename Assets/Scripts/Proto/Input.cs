@@ -46,7 +46,7 @@ namespace Proto {
             "DSABKAkSGwoFdG91Y2gYDiABKAsyDC5wcm90by5Ub3VjaCLWAQoFSW5wdXQS",
             "IAoLc2NyZWVuX3JlY3QYASABKAsyCy5wcm90by5SZWN0EhgKEHBpeGVsc19w",
             "ZXJfcG9pbnQYAiABKAISGAoQbWF4X3RleHR1cmVfc2lkZRgDIAEoDRIMCgR0",
-            "aW1lGAQgASgNEhQKDHByZWRpY3RlZF9kdBgFIAEoAhIcCgZldmVudHMYBiAD",
+            "aW1lGAQgASgBEhQKDHByZWRpY3RlZF9kdBgFIAEoAhIcCgZldmVudHMYBiAD",
             "KAsyDC5wcm90by5FdmVudBIRCgloYXNfZm9jdXMYByABKAgSIgoIbW9kaWZp",
             "ZXIYCCABKAsyEC5wcm90by5Nb2RpZmllcnMqlQUKB0tleVR5cGUSCwoHS1Rf",
             "Tk9ORRAAEg0KCUFycm93RG93bhABEg0KCUFycm93TGVmdBACEg4KCkFycm93",
@@ -2844,10 +2844,10 @@ namespace Proto {
 
     /// <summary>Field number for the "time" field.</summary>
     public const int TimeFieldNumber = 4;
-    private uint time_;
+    private double time_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint Time {
+    public double Time {
       get { return time_; }
       set {
         time_ = value;
@@ -2919,7 +2919,7 @@ namespace Proto {
       if (!object.Equals(ScreenRect, other.ScreenRect)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PixelsPerPoint, other.PixelsPerPoint)) return false;
       if (MaxTextureSide != other.MaxTextureSide) return false;
-      if (Time != other.Time) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Time, other.Time)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PredictedDt, other.PredictedDt)) return false;
       if(!events_.Equals(other.events_)) return false;
       if (HasFocus != other.HasFocus) return false;
@@ -2934,7 +2934,7 @@ namespace Proto {
       if (screenRect_ != null) hash ^= ScreenRect.GetHashCode();
       if (PixelsPerPoint != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PixelsPerPoint);
       if (MaxTextureSide != 0) hash ^= MaxTextureSide.GetHashCode();
-      if (Time != 0) hash ^= Time.GetHashCode();
+      if (Time != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Time);
       if (PredictedDt != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PredictedDt);
       hash ^= events_.GetHashCode();
       if (HasFocus != false) hash ^= HasFocus.GetHashCode();
@@ -2969,9 +2969,9 @@ namespace Proto {
         output.WriteRawTag(24);
         output.WriteUInt32(MaxTextureSide);
       }
-      if (Time != 0) {
-        output.WriteRawTag(32);
-        output.WriteUInt32(Time);
+      if (Time != 0D) {
+        output.WriteRawTag(33);
+        output.WriteDouble(Time);
       }
       if (PredictedDt != 0F) {
         output.WriteRawTag(45);
@@ -3008,9 +3008,9 @@ namespace Proto {
         output.WriteRawTag(24);
         output.WriteUInt32(MaxTextureSide);
       }
-      if (Time != 0) {
-        output.WriteRawTag(32);
-        output.WriteUInt32(Time);
+      if (Time != 0D) {
+        output.WriteRawTag(33);
+        output.WriteDouble(Time);
       }
       if (PredictedDt != 0F) {
         output.WriteRawTag(45);
@@ -3044,8 +3044,8 @@ namespace Proto {
       if (MaxTextureSide != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(MaxTextureSide);
       }
-      if (Time != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Time);
+      if (Time != 0D) {
+        size += 1 + 8;
       }
       if (PredictedDt != 0F) {
         size += 1 + 4;
@@ -3081,7 +3081,7 @@ namespace Proto {
       if (other.MaxTextureSide != 0) {
         MaxTextureSide = other.MaxTextureSide;
       }
-      if (other.Time != 0) {
+      if (other.Time != 0D) {
         Time = other.Time;
       }
       if (other.PredictedDt != 0F) {
@@ -3127,8 +3127,8 @@ namespace Proto {
             MaxTextureSide = input.ReadUInt32();
             break;
           }
-          case 32: {
-            Time = input.ReadUInt32();
+          case 33: {
+            Time = input.ReadDouble();
             break;
           }
           case 45: {
@@ -3180,8 +3180,8 @@ namespace Proto {
             MaxTextureSide = input.ReadUInt32();
             break;
           }
-          case 32: {
-            Time = input.ReadUInt32();
+          case 33: {
+            Time = input.ReadDouble();
             break;
           }
           case 45: {
