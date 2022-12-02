@@ -66,41 +66,53 @@ namespace EGui
 
         private TouchScreenKeyboard keyboard;
 
-        private bool showStatus = false;
+        private string committedInput = "";
 
-        private string lastInput = "";
+        private int lastTouchId = -1;
 
         public void OpenKeyboard(int show)
         {
+#if UNITY_EDITOR
             var status = show != 0;
-            if (status == showStatus)
+            
+            if (keyboard == null && status)
             {
-                return;
+                Debug.Log("open keyboard");
+                keyboard = TouchScreenKeyboard.Open(committedInput);
             }
-
-            showStatus = status;
-            if (showStatus)
+            
+            if (!status && keyboard != null)
             {
-                keyboard = TouchScreenKeyboard.Open("");
-            }
-            else if (keyboard != null)
-            {
+                Debug.Log("close keyboard");
                 keyboard.active = false;
-                lastInput = "";
+                keyboard = null;
+                committedInput = "";
             }
+#endif
         }
 
         private string GetKeyboardInput()
         {
-            var current = keyboard?.text;
-            if (current == null || current.Equals(lastInput))
+            if (keyboard != null) 
             {
-                return "";
+                switch (keyboard.status)
+                {
+                    case TouchScreenKeyboard.Status.Visible:
+                        break;
+                    case TouchScreenKeyboard.Status.Done:
+                        goto case default;
+                    case TouchScreenKeyboard.Status.Canceled:
+                        goto case default;
+                    case TouchScreenKeyboard.Status.LostFocus:
+                        goto case default;
+                    default:
+                        committedInput = "";
+                        keyboard = null;
+                        break;
+                }
             }
 
-            var diff = current.Substring(lastInput.Length, current.Length - lastInput.Length);
-            lastInput = current;
-            return diff;
+            return keyboard != null ? keyboard.text : committedInput;
         }
 
         public Input GetInput()
@@ -203,8 +215,9 @@ namespace EGui
                 }
             }
 
-            foreach (var touch in UnityInput.touches)
+            for (var i = 0; i < UnityInput.touchCount; i++)
             {
+                var touch = UnityInput.GetTouch(i);
                 var e = new Event
                 {
                     Et = EventType.Touch,
@@ -219,9 +232,21 @@ namespace EGui
                 };
                 input.Events.Add(e);
 
+                if (lastTouchId != touch.fingerId)
+                {
+                    continue;
+                }
+
                 switch (touch.phase)
                 {
                     case UnityEngine.TouchPhase.Began:
+                        lastTouchId = touch.fingerId;
+                        e = new Event
+                        {
+                            Et = EventType.PointerMoved,
+                            PointerMoved = Pos2FromVector2(touch.position),
+                        };
+                        input.Events.Add(e);
                         e = new Event
                         {
                             Et = EventType.PointerButton,
@@ -233,7 +258,7 @@ namespace EGui
                             }
                         };
                         input.Events.Add(e);
-                        goto case UnityEngine.TouchPhase.Moved;
+                        break;
                     case UnityEngine.TouchPhase.Moved:
                         e = new Event
                         {
@@ -245,6 +270,7 @@ namespace EGui
                     case UnityEngine.TouchPhase.Stationary:
                         break;
                     case UnityEngine.TouchPhase.Ended:
+                        lastTouchId = -1;
                         e = new Event
                         {
                             Et = EventType.PointerButton,
@@ -258,6 +284,7 @@ namespace EGui
                         input.Events.Add(e);
                         goto case UnityEngine.TouchPhase.Canceled;
                     case UnityEngine.TouchPhase.Canceled:
+                        lastTouchId = -1;
                         e = new Event
                         {
                             Et = EventType.PointerGone,
@@ -270,10 +297,33 @@ namespace EGui
             }
 
 
-#if UNITY_EDITOR
+#if !UNITY_EDITOR
             var inputString = UnityInput.inputString;
 #else
             var inputString = GetKeyboardInput();
+            for (var i = 0; i < inputString.Length; i++)
+            {
+                var e = new Event
+                {
+                    Et = EventType.Key,
+                    Key = new Key
+                    {
+                        Key_ = KeyType.Backspace,
+                        Pressed = true,
+                    }
+                };
+                input.Events.Add(e);
+                e = new Event
+                {
+                    Et = EventType.Key,
+                    Key = new Key
+                    {
+                        Key_ = KeyType.Backspace,
+                        Pressed = false,
+                    }
+                };
+                input.Events.Add(e);
+            }       
 #endif
             if (inputString != null && !inputString.Equals(""))
             {
@@ -353,7 +403,7 @@ namespace EGui
                 UnityEngine.TouchPhase.Canceled => TouchPhase.Cancel,
                 UnityEngine.TouchPhase.Ended => TouchPhase.End,
                 UnityEngine.TouchPhase.Moved => TouchPhase.Move,
-                UnityEngine.TouchPhase.Stationary => TouchPhase.End,
+                UnityEngine.TouchPhase.Stationary => TouchPhase.TpNone,
                 _ => TouchPhase.TpNone
             };
         }
