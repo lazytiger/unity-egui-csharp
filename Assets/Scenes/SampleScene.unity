@@ -314,6 +314,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d18af84a896525246a7ef81fe17c20f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  EGuiLibPath: D:\Rust\Workspace\egui-unity\demo\target\release\demo.dll
+  EGuiLibPath: D:\Rust\Workspace\egui-unity\demo\target\debug\demo.dll
   material: {fileID: 2100000, guid: ea3afd35fa53727499f9aa2b0a614267, type: 2}
   fps: 60
