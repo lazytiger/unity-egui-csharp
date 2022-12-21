@@ -15,9 +15,41 @@ namespace EGui
 {
     public class InputGather
     {
-        private static readonly KeyCode[] UnityKeys;
+        private static readonly KeyCode[] UnityKeys =
+        {
+            KeyCode.A, KeyCode.B, KeyCode.Backspace, KeyCode.C, KeyCode.D, KeyCode.Delete, KeyCode.E, KeyCode.End,
+            KeyCode.KeypadEnter, KeyCode.Escape, KeyCode.F, KeyCode.F1, KeyCode.F2, KeyCode.F3, KeyCode.F4, KeyCode.F5,
+            KeyCode.F6, KeyCode.F7, KeyCode.F8, KeyCode.F9, KeyCode.F10, KeyCode.F11, KeyCode.F12, KeyCode.F13,
+            KeyCode.F14,
+            KeyCode.F15,
+            KeyCode.G, KeyCode.H, KeyCode.Home, KeyCode.I,
+            KeyCode.Insert, KeyCode.J, KeyCode.K, KeyCode.L, KeyCode.M, KeyCode.N, KeyCode.Keypad0, KeyCode.Keypad1,
+            KeyCode.Keypad2,
+            KeyCode.Keypad3,
+            KeyCode.Keypad4, KeyCode.Keypad5, KeyCode.Keypad6, KeyCode.Keypad7, KeyCode.Keypad8, KeyCode.Keypad9,
+            KeyCode.O,
+            KeyCode.P,
+            KeyCode.Q, KeyCode.R, KeyCode.S, KeyCode.Space, KeyCode.T, KeyCode.Tab,
+            KeyCode.U, KeyCode.V, KeyCode.W, KeyCode.X, KeyCode.Y, KeyCode.Z,
+            KeyCode.DownArrow, KeyCode.LeftArrow, KeyCode.RightArrow, KeyCode.UpArrow, KeyCode.PageDown, KeyCode.PageUp,
+        };
 
-        private static readonly KeyType[] EguiKeys;
+        private static readonly KeyType[] EguiKeys =
+        {
+            KeyType.A, KeyType.B, KeyType.Backspace, KeyType.C, KeyType.D, KeyType.Delete, KeyType.E, KeyType.End,
+            KeyType.Enter, KeyType.Escape, KeyType.F, KeyType.F1, KeyType.F2, KeyType.F3, KeyType.F4, KeyType.F5,
+            KeyType.F6, KeyType.F7, KeyType.F8, KeyType.F9, KeyType.F10, KeyType.F11, KeyType.F12, KeyType.F13,
+            KeyType.F14,
+            KeyType.F15,
+            KeyType.G, KeyType.H, KeyType.Home, KeyType.I,
+            KeyType.Insert, KeyType.J, KeyType.K, KeyType.L, KeyType.M, KeyType.N, KeyType.Num0, KeyType.Num1,
+            KeyType.Num2,
+            KeyType.Num3,
+            KeyType.Num4, KeyType.Num5, KeyType.Num6, KeyType.Num7, KeyType.Num8, KeyType.Num9, KeyType.O, KeyType.P,
+            KeyType.Q, KeyType.R, KeyType.S, KeyType.Space, KeyType.T, KeyType.Tab,
+            KeyType.U, KeyType.V, KeyType.W, KeyType.X, KeyType.Y, KeyType.Z, KeyType.ArrowDown, KeyType.ArrowLeft,
+            KeyType.ArrowRight, KeyType.ArrowUp, KeyType.PageDown, KeyType.PageUp
+        };
 
         private static InputGather _instance;
 
@@ -37,42 +69,6 @@ namespace EGui
         private string committedInput = "";
 
         private int lastTouchId = -1;
-
-        static InputGather()
-        {
-            UnityKeys = new[] {
-                KeyCode.A, KeyCode.B, KeyCode.Backspace, KeyCode.C, KeyCode.D, KeyCode.Delete, KeyCode.E, KeyCode.End,
-                KeyCode.KeypadEnter, KeyCode.Escape, KeyCode.F, KeyCode.F1, KeyCode.F2, KeyCode.F3, KeyCode.F4, KeyCode.F5,
-                KeyCode.F6, KeyCode.F7, KeyCode.F8, KeyCode.F9, KeyCode.F10, KeyCode.F11, KeyCode.F12, KeyCode.F13,
-                KeyCode.F14,
-                KeyCode.F15,
-                KeyCode.G, KeyCode.H, KeyCode.Home, KeyCode.I,
-                KeyCode.Insert, KeyCode.J, KeyCode.K, KeyCode.L, KeyCode.M, KeyCode.N, KeyCode.Keypad0, KeyCode.Keypad1,
-                KeyCode.Keypad2,
-                KeyCode.Keypad3,
-                KeyCode.Keypad4, KeyCode.Keypad5, KeyCode.Keypad6, KeyCode.Keypad7, KeyCode.Keypad8, KeyCode.Keypad9,
-                KeyCode.O,
-                KeyCode.P,
-                KeyCode.Q, KeyCode.R, KeyCode.S, KeyCode.Space, KeyCode.T, KeyCode.Tab,
-                KeyCode.U, KeyCode.V, KeyCode.W, KeyCode.X, KeyCode.Y, KeyCode.Z,
-                KeyCode.DownArrow, KeyCode.LeftArrow, KeyCode.RightArrow, KeyCode.UpArrow, KeyCode.PageDown, KeyCode.PageUp,
-            };
-            EguiKeys = new[] {
-                KeyType.A, KeyType.B, KeyType.Backspace, KeyType.C, KeyType.D, KeyType.Delete, KeyType.E, KeyType.End,
-                KeyType.Enter, KeyType.Escape, KeyType.F, KeyType.F1, KeyType.F2, KeyType.F3, KeyType.F4, KeyType.F5,
-                KeyType.F6, KeyType.F7, KeyType.F8, KeyType.F9, KeyType.F10, KeyType.F11, KeyType.F12, KeyType.F13,
-                KeyType.F14,
-                KeyType.F15,
-                KeyType.G, KeyType.H, KeyType.Home, KeyType.I,
-                KeyType.Insert, KeyType.J, KeyType.K, KeyType.L, KeyType.M, KeyType.N, KeyType.Num0, KeyType.Num1,
-                KeyType.Num2,
-                KeyType.Num3,
-                KeyType.Num4, KeyType.Num5, KeyType.Num6, KeyType.Num7, KeyType.Num8, KeyType.Num9, KeyType.O, KeyType.P,
-                KeyType.Q, KeyType.R, KeyType.S, KeyType.Space, KeyType.T, KeyType.Tab,
-                KeyType.U, KeyType.V, KeyType.W, KeyType.X, KeyType.Y, KeyType.Z, KeyType.ArrowDown, KeyType.ArrowLeft,
-                KeyType.ArrowRight, KeyType.ArrowUp, KeyType.PageDown, KeyType.PageUp
-            };
-        }
 
         public void OpenKeyboard(int show)
         {

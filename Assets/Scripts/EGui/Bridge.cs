@@ -16,6 +16,7 @@ namespace EGui
         internal IntPtr PaintMesh;
         internal IntPtr EndPaint;
         internal IntPtr ShowKeyboard;
+        internal IntPtr Logger;
     }
 
     public struct EGuiInitializer
@@ -50,7 +51,9 @@ namespace EGui
 
         private delegate void FuncNoArgsNoReturn();
 
-        private delegate void ShowKeyboard(int show);
+        private delegate void ShowKeyboard(int show, IntPtr text, int len);
+
+        private delegate void Logger(int logType, IntPtr text, int len);
 
 #if UNITY_EDITOR
         private delegate EGuiInitializer InitEGuiDelegate(UnityInitializer initializer);
@@ -85,7 +88,7 @@ namespace EGui
         public static extern EGuiInitializer InitEGui(UnityInitializer initializer);
 #endif
         private IntPtr app = IntPtr.Zero;
-        
+
         private delegate void UpdateEGuiDelegate(Buffer buffer, IntPtr app, uint destroy);
 
         private UpdateEGuiDelegate UpdateEGui;
@@ -135,9 +138,28 @@ namespace EGui
         }
 
         [MonoPInvokeCallback(typeof(FuncNoArgsNoReturn))]
-        static void showKeyboard(int show)
+        static void showKeyboard(int show, IntPtr text, int len)
         {
-            InputGather.Instance.OpenKeyboard(show); 
+            var current = Marshal.PtrToStringUTF8(text, len);
+            InputGather.Instance.OpenKeyboard(show, current);
+        }
+
+        [MonoPInvokeCallback(typeof(Logger))]
+        static void showLog(int logType, IntPtr m, int len)
+        {
+            var message = Marshal.PtrToStringUTF8(m, len);
+            switch (logType)
+            {
+                case 1:
+                    Debug.LogError(message);
+                    break;
+                case 4:
+                    Debug.Log(message);
+                    break;
+                case 3:
+                    Debug.LogWarning(message);
+                    break;
+            }
         }
 
         public void Init()
@@ -159,12 +181,13 @@ namespace EGui
 
             var initializer = new UnityInitializer()
             {
-                SetTexture = Marshal.GetFunctionPointerForDelegate((SetTexture) setTexture),
-                RemTexture = Marshal.GetFunctionPointerForDelegate((RemTexture) remTexture),
-                PaintMesh = Marshal.GetFunctionPointerForDelegate((PaintMesh) paintMesh),
-                BeginPaint = Marshal.GetFunctionPointerForDelegate((FuncNoArgsNoReturn) BeginPaint),
-                EndPaint = Marshal.GetFunctionPointerForDelegate((FuncNoArgsNoReturn) EndPaint),
-                ShowKeyboard = Marshal.GetFunctionPointerForDelegate((ShowKeyboard)showKeyboard)
+                SetTexture = Marshal.GetFunctionPointerForDelegate((SetTexture)setTexture),
+                RemTexture = Marshal.GetFunctionPointerForDelegate((RemTexture)remTexture),
+                PaintMesh = Marshal.GetFunctionPointerForDelegate((PaintMesh)paintMesh),
+                BeginPaint = Marshal.GetFunctionPointerForDelegate((FuncNoArgsNoReturn)BeginPaint),
+                EndPaint = Marshal.GetFunctionPointerForDelegate((FuncNoArgsNoReturn)EndPaint),
+                ShowKeyboard = Marshal.GetFunctionPointerForDelegate((ShowKeyboard)showKeyboard),
+                Logger = Marshal.GetFunctionPointerForDelegate((Logger)showLog),
             };
             var egui = InitEGui(initializer);
             UpdateEGui = Marshal.GetDelegateForFunctionPointer<UpdateEGuiDelegate>(egui.Update);
@@ -183,7 +206,7 @@ namespace EGui
             input.WriteTo(ms);
             var handle = GCHandle.Alloc(ms.GetBuffer(), GCHandleType.Pinned);
             var addr = handle.AddrOfPinnedObject();
-            UpdateEGui(new Buffer {data = addr, len = (ulong) ms.Length}, app, 0);
+            UpdateEGui(new Buffer { data = addr, len = (ulong)ms.Length }, app, 0);
             handle.Free();
         }
 
@@ -192,7 +215,7 @@ namespace EGui
 #if UNITY_EDITOR
             if (eguiHandle != IntPtr.Zero)
             {
-                UpdateEGui(new Buffer() {data = IntPtr.Zero, len = 0}, app, 1);
+                UpdateEGui(new Buffer() { data = IntPtr.Zero, len = 0 }, app, 1);
                 NativeMethods.FreeLibrary(eguiHandle);
                 eguiHandle = IntPtr.Zero;
                 app = IntPtr.Zero;
