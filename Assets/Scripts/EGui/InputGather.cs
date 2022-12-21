@@ -58,41 +58,45 @@ namespace EGui
             get { return _instance ??= new InputGather(); }
         }
 
-        private readonly Input input = new Input();
+        private readonly Input _input = new Input();
 
-        StringBuilder sb = new StringBuilder();
+        readonly StringBuilder _sb = new StringBuilder();
 
-        private Vector3 mousePosition;
+        private Vector3 _mousePosition;
 
-        private TouchScreenKeyboard keyboard;
+        private TouchScreenKeyboard _keyboard;
 
-        private int lastTouchId = -1;
+        private int _lastTouchId = -1;
+
+        private string _lastTextInput = "";
 
         public void OpenKeyboard(int show, string current)
         {
-#if UNITY_EDITOR
+#if !UNITY_EDITOR
             var status = show != 0;
             
-            if (keyboard == null && status)
+            if (_keyboard == null && status)
             {
                 Debug.Log("open keyboard");
-                keyboard = TouchScreenKeyboard.Open(current);
+                _lastTextInput = current;
+                _keyboard = TouchScreenKeyboard.Open(current);
             }
             
-            if (!status && keyboard != null)
+            if (!status && _keyboard != null)
             {
                 Debug.Log("close keyboard");
-                keyboard.active = false;
-                keyboard = null;
+                _keyboard.active = false;
+                _keyboard = null;
+                _lastTextInput = "";
             }
 #endif
         }
 
         private string GetKeyboardInput()
         {
-            if (keyboard != null) 
+            if (_keyboard != null) 
             {
-                switch (keyboard.status)
+                switch (_keyboard.status)
                 {
                     case TouchScreenKeyboard.Status.Visible:
                         break;
@@ -103,18 +107,18 @@ namespace EGui
                     case TouchScreenKeyboard.Status.LostFocus:
                         goto case default;
                     default:
-                        keyboard = null;
+                        _keyboard = null;
                         break;
                 }
             }
 
-            return keyboard != null ? keyboard.text : "";
+            return _keyboard != null ? _keyboard.text : "";
         }
 
         public Input GetInput()
         {
-            input.Events.Clear();
-            input.ScreenRect = new Proto.Rect
+            _input.Events.Clear();
+            _input.ScreenRect = new Proto.Rect
             {
                 Min = new Pos2
                 {
@@ -127,16 +131,16 @@ namespace EGui
                     Y = Screen.height,
                 }
             };
-            input.MaxTextureSide = (uint) SystemInfo.maxTextureSize;
-            input.Time = Time.time;
-            input.HasFocus = UnityInput.anyKey;
-            input.PixelsPerPoint = 1;
+            _input.MaxTextureSide = (uint) SystemInfo.maxTextureSize;
+            _input.Time = Time.time;
+            _input.HasFocus = UnityInput.anyKey;
+            _input.PixelsPerPoint = 1;
             if (Application.targetFrameRate > 0)
             {
-                input.PredictedDt = 1.0f / Application.targetFrameRate;
+                _input.PredictedDt = 1.0f / Application.targetFrameRate;
             }
 
-            input.Modifier = new Modifiers
+            _input.Modifier = new Modifiers
             {
                 Alt = UnityInput.GetKey(KeyCode.LeftAlt) || UnityInput.GetKey(KeyCode.RightAlt),
                 Command = UnityInput.GetKey(KeyCode.LeftCommand) || UnityInput.GetKey(KeyCode.RightCommand),
@@ -158,7 +162,7 @@ namespace EGui
                             Pressed = true
                         }
                     };
-                    input.Events.Add(e);
+                    _input.Events.Add(e);
                 }
 
                 for (var mouse = 0; mouse < 3; mouse++)
@@ -174,7 +178,7 @@ namespace EGui
                             Pressed = true
                         }
                     };
-                    input.Events.Add(e);
+                    _input.Events.Add(e);
                 }
             }
             else
@@ -191,7 +195,7 @@ namespace EGui
                             Pressed = false
                         }
                     };
-                    input.Events.Add(e);
+                    _input.Events.Add(e);
                 }
 
                 for (var mouse = 0; mouse < 3; mouse++)
@@ -207,7 +211,7 @@ namespace EGui
                             Pressed = false
                         }
                     };
-                    input.Events.Add(e);
+                    _input.Events.Add(e);
                 }
             }
 
@@ -226,9 +230,9 @@ namespace EGui
                         DeviceId = 0
                     }
                 };
-                input.Events.Add(e);
+                _input.Events.Add(e);
 
-                if (lastTouchId != touch.fingerId)
+                if (_lastTouchId != touch.fingerId)
                 {
                     continue;
                 }
@@ -236,13 +240,13 @@ namespace EGui
                 switch (touch.phase)
                 {
                     case UnityEngine.TouchPhase.Began:
-                        lastTouchId = touch.fingerId;
+                        _lastTouchId = touch.fingerId;
                         e = new Event
                         {
                             Et = EventType.PointerMoved,
                             PointerMoved = Pos2FromVector2(touch.position),
                         };
-                        input.Events.Add(e);
+                        _input.Events.Add(e);
                         e = new Event
                         {
                             Et = EventType.PointerButton,
@@ -253,7 +257,7 @@ namespace EGui
                                 Pos = Pos2FromVector2(touch.position),
                             }
                         };
-                        input.Events.Add(e);
+                        _input.Events.Add(e);
                         break;
                     case UnityEngine.TouchPhase.Moved:
                         e = new Event
@@ -261,12 +265,12 @@ namespace EGui
                             Et = EventType.PointerMoved,
                             PointerMoved = Pos2FromVector2(touch.position),
                         };
-                        input.Events.Add(e);
+                        _input.Events.Add(e);
                         break;
                     case UnityEngine.TouchPhase.Stationary:
                         break;
                     case UnityEngine.TouchPhase.Ended:
-                        lastTouchId = -1;
+                        _lastTouchId = -1;
                         e = new Event
                         {
                             Et = EventType.PointerButton,
@@ -277,15 +281,15 @@ namespace EGui
                                 Pos = Pos2FromVector2(touch.position),
                             }
                         };
-                        input.Events.Add(e);
+                        _input.Events.Add(e);
                         goto case UnityEngine.TouchPhase.Canceled;
                     case UnityEngine.TouchPhase.Canceled:
-                        lastTouchId = -1;
+                        _lastTouchId = -1;
                         e = new Event
                         {
                             Et = EventType.PointerGone,
                         };
-                        input.Events.Add(e);
+                        _input.Events.Add(e);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -293,11 +297,21 @@ namespace EGui
             }
 
 
-#if !UNITY_EDITOR
+#if UNITY_EDITOR
             var inputString = UnityInput.inputString;
+            if (!inputString.Equals(""))
+            {
+                _sb.Clear();
+                foreach (var c in inputString.Where(c => !char.IsControl(c)))
+                {
+                    _sb.Append(c);
+                }
+
+                inputString = _sb.ToString();
+            }
 #else
             var inputString = GetKeyboardInput();
-            for (var i = 0; i < inputString.Length; i++)
+            for (var i = 0; i < _lastTextInput.Length; i++)
             {
                 var e = new Event
                 {
@@ -308,7 +322,7 @@ namespace EGui
                         Pressed = true,
                     }
                 };
-                input.Events.Add(e);
+                _input.Events.Add(e);
                 e = new Event
                 {
                     Et = EventType.Key,
@@ -318,27 +332,21 @@ namespace EGui
                         Pressed = false,
                     }
                 };
-                input.Events.Add(e);
-            }       
+                _input.Events.Add(e);
+            }
+            _lastTextInput = inputString;
 #endif
-            if (inputString != null && !inputString.Equals(""))
+            if (!inputString.Equals(""))
             {
-                sb.Clear();
-                foreach (var c in inputString.Where(c => !char.IsControl(c)))
-                {
-                    sb.Append(c);
-                }
-
                 var e = new Event
                 {
                     Et = EventType.Text,
-                    Text = sb.ToString()
+                    Text = inputString,
                 };
-                input.Events.Add(e);
+                _input.Events.Add(e);
             }
 
-
-            if (!mousePosition.Equals(UnityInput.mousePosition))
+            if (!_mousePosition.Equals(UnityInput.mousePosition))
             {
                 if (UnityInput.mousePosition.x < 0 || UnityInput.mousePosition.y < 0 ||
                     UnityInput.mousePosition.x > Screen.width || UnityInput.mousePosition.y > Screen.height)
@@ -347,7 +355,7 @@ namespace EGui
                     {
                         Et = EventType.PointerGone
                     };
-                    input.Events.Add(e);
+                    _input.Events.Add(e);
                 }
                 else
                 {
@@ -356,10 +364,10 @@ namespace EGui
                         Et = EventType.PointerMoved,
                         PointerMoved = Pos2FromVector2(UnityInput.mousePosition)
                     };
-                    input.Events.Add(e);
+                    _input.Events.Add(e);
                 }
 
-                mousePosition = UnityInput.mousePosition;
+                _mousePosition = UnityInput.mousePosition;
             }
 
             var y = UnityInput.GetAxis("Mouse ScrollWheel");
@@ -374,10 +382,10 @@ namespace EGui
                         Y = y * 30,
                     }
                 };
-                input.Events.Add(e);
+                _input.Events.Add(e);
             }
 
-            return input;
+            return _input;
         }
 
         private static ButtonType EguiButtonTypeFromUnity(int mouse)
