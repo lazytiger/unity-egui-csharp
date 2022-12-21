@@ -66,8 +66,6 @@ namespace EGui
 
         private TouchScreenKeyboard keyboard;
 
-        private string committedInput = "";
-
         private int lastTouchId = -1;
 
         public void OpenKeyboard(int show, string current)
@@ -78,7 +76,7 @@ namespace EGui
             if (keyboard == null && status)
             {
                 Debug.Log("open keyboard");
-                keyboard = TouchScreenKeyboard.Open(committedInput);
+                keyboard = TouchScreenKeyboard.Open(current);
             }
             
             if (!status && keyboard != null)
@@ -86,7 +84,6 @@ namespace EGui
                 Debug.Log("close keyboard");
                 keyboard.active = false;
                 keyboard = null;
-                committedInput = "";
             }
 #endif
         }
@@ -106,13 +103,12 @@ namespace EGui
                     case TouchScreenKeyboard.Status.LostFocus:
                         goto case default;
                     default:
-                        committedInput = "";
                         keyboard = null;
                         break;
                 }
             }
 
-            return keyboard != null ? keyboard.text : committedInput;
+            return keyboard != null ? keyboard.text : "";
         }
 
         public Input GetInput()
