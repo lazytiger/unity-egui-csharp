@@ -94,7 +94,7 @@ namespace EGui
 
         private string GetKeyboardInput()
         {
-            if (_keyboard != null) 
+            if (_keyboard != null)
             {
                 switch (_keyboard.status)
                 {
@@ -131,7 +131,7 @@ namespace EGui
                     Y = Screen.height,
                 }
             };
-            _input.MaxTextureSide = (uint) SystemInfo.maxTextureSize;
+            _input.MaxTextureSide = (uint)SystemInfo.maxTextureSize;
             _input.Time = Time.time;
             _input.HasFocus = UnityInput.anyKey;
             _input.PixelsPerPoint = 1;
@@ -226,7 +226,7 @@ namespace EGui
                         Force = touch.pressure,
                         Phase = EguiPhaseFromUnity(touch.phase),
                         Pos = Pos2FromVector2(touch.position),
-                        Id = (ulong) touch.fingerId,
+                        Id = (ulong)touch.fingerId,
                         DeviceId = 0
                     }
                 };
@@ -299,16 +299,26 @@ namespace EGui
 
 #if UNITY_EDITOR
             var inputString = UnityInput.inputString;
-            if (!inputString.Equals(""))
+            if (inputString.Length > 0)
             {
+                Debug.Log($"input length:{inputString.Length}");
                 _sb.Clear();
-                foreach (var c in inputString.Where(c => !char.IsControl(c)))
+                foreach (var c in inputString)
                 {
-                    _sb.Append(c);
+                    if (c != '\b')
+                    {
+                        _sb.Append(c);
+                        if (c == '\r')
+                        {
+                            _sb.Append('\n');
+                        }
+                    }
                 }
 
                 inputString = _sb.ToString();
+                Debug.Log($"input length:{inputString.Length}");
             }
+
 #else
             var inputString = GetKeyboardInput();
             for (var i = 0; i < _lastTextInput.Length; i++)
@@ -336,7 +346,7 @@ namespace EGui
             }
             _lastTextInput = inputString;
 #endif
-            if (!inputString.Equals(""))
+            if (inputString.Length > 0)
             {
                 var e = new Event
                 {
