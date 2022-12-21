@@ -70,7 +70,7 @@ namespace EGui
 
         private int lastTouchId = -1;
 
-        public void OpenKeyboard(int show)
+        public void OpenKeyboard(int show, string current)
         {
 #if UNITY_EDITOR
             var status = show != 0;
