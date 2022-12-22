@@ -11,29 +11,45 @@ public class EGuiBehaviour : MonoBehaviour
 
     public Material material;
 
-    [Range(30, 120)]
-    public int fps = 60;
-    
+    [Range(30, 120)] public int fps = 60;
+
     private void Awake()
     {
         Application.targetFrameRate = fps;
         Input.imeCompositionMode = IMECompositionMode.On;
-        var c = GetComponent<Camera>();
-        var cb = new CommandBuffer();
-        cb.name = "Draw EGui";
-        c.AddCommandBuffer(CameraEvent.AfterForwardAlpha, cb);
 #if UNITY_EDITOR
         Bridge.Instance.EGuiLibPath = EGuiLibPath;
 #endif
-        Painter.Instance.CommandBuffer = cb;
         Painter.Instance.Material = material;
+        var cb = new CommandBuffer();
+        cb.name = "Draw EGui";
+        Painter.Instance.CommandBuffer = cb;
+
+        if (GraphicsSettings.currentRenderPipeline)
+        {
+            RenderPipelineManager.endFrameRendering += delegate(ScriptableRenderContext context, Camera[] cameras)
+            {
+                Bridge.Instance.Update();
+                context.ExecuteCommandBuffer(cb);
+                context.Submit();
+            };
+        }
+        else
+        {
+            var c = GetComponent<Camera>();
+            c.AddCommandBuffer(CameraEvent.AfterForwardAlpha, cb);
+        }
+        
         Bridge.Instance.Init();
     }
 
     // Update is called once per frame
     private void Update()
     {
-        Bridge.Instance.Update();
+        if (!GraphicsSettings.currentRenderPipeline)
+        {
+            Bridge.Instance.Update();
+        }
     }
 
     private void OnApplicationQuit()
